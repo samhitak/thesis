@@ -1,0 +1,59 @@
+\documentclass[12pt,lot,lof]{puthesis_undergraduate}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{latexsym}
+\usepackage{graphicx}
+\usepackage[square,sort,comma,numbers]{natbib} % for nice bibliography
+
+\input{newcommands}
+
+\title{Predicting Information Diffusion and Content Engagement in Social Networks}
+\submitted{June 2018}  %graduation date
+\author{Samhita Karnati}
+\advisor{Professor Andrea LaPaugh} %
+\dedication{}
+
+
+\abstract{
+%\input{./Chapters/abstract} 
+}
+
+%\acknowledgements{
+%\input{./Chapters/acknow}
+%}
+
+\begin{document}
+\chapter{Introduction}\label{ch:intro}  %insert chapter title
+\input{./Chapters/intro} % and path to the .tex file (no need to include .tex)
+
+\chapter{Background}
+\input{./Chapters/relatedwork}
+
+\chapter{Approach}
+\input{./Chapters/approach}
+
+\chapter{Data Collection}
+\input{./Chapters/data}
+
+\chapter{Prediction Methods}
+\input{./Chapters/methods}
+
+\chapter{Results}
+\input{./Chapters/results}
+
+\chapter{Conclusion}
+\input{./Chapters/conclusion}
+
+
+
+
+
+\appendix
+
+\bibliographystyle{acm}
+\bibliography{./Bibliography/refs} \label{bib}
+
+
+\end{document}

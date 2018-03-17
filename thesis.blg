@@ -1,0 +1,59 @@
+This is BibTeX, Version 0.99d (TeX Live 2015)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: thesis.aux
+The style file: acm.bst
+Database file #1: ./Bibliography/refs.bib
+Warning--entry type for "socialsites" isn't style-file defined
+--line 1 of file ./Bibliography/refs.bib
+Warning--entry type for "zuckpost" isn't style-file defined
+--line 10 of file ./Bibliography/refs.bib
+Warning--entry type for "fbtime" isn't style-file defined
+--line 19 of file ./Bibliography/refs.bib
+Warning--entry type for "browsers" isn't style-file defined
+--line 27 of file ./Bibliography/refs.bib
+Warning--entry type for "pew" isn't style-file defined
+--line 35 of file ./Bibliography/refs.bib
+Warning--to sort, need author or key in browsers
+Warning--to sort, need author or key in fbtime
+You've used 14 entries,
+            2253 wiz_defined-function locations,
+            611 strings with 6106 characters,
+and the built_in function-call counts, 4074 in all, are:
+= -- 388
+> -- 161
+< -- 0
++ -- 71
+- -- 54
+* -- 312
+:= -- 633
+add.period$ -- 34
+call.type$ -- 14
+change.case$ -- 68
+chr.to.int$ -- 0
+cite$ -- 16
+duplicate$ -- 145
+empty$ -- 370
+format.name$ -- 54
+if$ -- 859
+int.to.chr$ -- 0
+int.to.str$ -- 14
+missing$ -- 9
+newline$ -- 65
+num.names$ -- 24
+pop$ -- 89
+preamble$ -- 1
+purify$ -- 55
+quote$ -- 0
+skip$ -- 107
+stack$ -- 0
+substring$ -- 249
+swap$ -- 38
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 56
+warning$ -- 2
+while$ -- 42
+width$ -- 16
+write$ -- 128
+(There were 7 warnings)

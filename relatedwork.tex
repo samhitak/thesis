@@ -1,0 +1,80 @@
+\section{Networks and Graphs} \label{ch:networksgraphs}
+There are a number of different types of networks, including migration networks, trade networks, and social networks.  With the introduction of social networking platforms came online social networks.  This project focuses on such online social networks and any mention of social networks refers to \textit{online} social networks unless otherwise specified.
+
+Social networks, and networks more generally speaking, can be modeled as graphs.  Traditionally, users are represented as nodes and interactions between users are represented as an edge connecting the relevant nodes.  These interactions can include the act of friending, following, liking, sharing, etc.  In the friending context, edges are not directed, as friending is a mutual interaction; both nodes are equally involved in the interaction and there is no directionality regarding the friendship.  On the other hand, following, liking, and sharing are all directed actions in that one user follows another, likes another users content, or shares content to another user.  These interactions are represented with directed edges as there is directionality involved in the interaction.  In addition, nodes and edges can have weights associated with them.  For example, a weighted undirected edge representing a friendship with weight of $2$ could mean that these two nodes have a friendship that is twice as strong as an edge with weight $1$.  Similarly, if an edge representing likes from one node $a$ to another node $b$ has weight $5$, it can be interpreted that user $a$ liked user $b$'s content $5$ times.
+
+\subsection{Link Prediction Methods} \label{sec:linkpred}
+Given that edges represent interactions between two users, predicting an edge is analogous to predicting an interaction between two users.  This is useful for this project as one of the goals is to predict the spread of information in a network and one user sharing content to another user is an interaction that can be captured as an edge between the two user nodes.  Methods for such link prediction often draw on the structure of the graph to determine the likelihood of a particular edge forming.  These structural elements include the number of neighbors a node might have and the degree of a node.  Different methods make different assumptions about what structural qualities are most important.  For the following link prediction techniques, if $x$ be a node, let $N(x)$ be the set of neighbors of $x$ in the graph $G$.
+\subsubsection{Common Neighbors}
+The most intuitive and simplest link prediction technique is based on the common neighbors score \cite{linkpredintro}.  For two nodes $x$ and $y$, $$score(x,y) = |N(x) \cap N(y)|$$
+Essentially, this score asserts that the edge between $x$ and $y$ is more likely if both nodes have a large overlap of neighbors.  In the friending context, this means that $x$ and $y$ are more likely to be friends if they share many common friends.
+\subsubsection{Adamic-Adar}
+Another way to to measure the proximity of two nodes is called the Adamic-Adar score.  This score computes the similarity between two nodes $x$ and $y$ by looking at a common feature $z$ that the two nodes share: $$score(x,y) = \sum_{z \in N(x) \cap N(y)} \frac{1}{log(N(z))}$$
+This score refines simply counting common features by weighting rarer features more heavily \cite{linkpredintro}.
+\subsubsection{Preferential Attachment}
+A third way to predict an edge between two nodes is to look at the quantity of neighbors each has.  For two nodes $x$ and $y$, this preferential attachment score is defined as $$score(x, y) = |N(x)| \dot |N(y)|$$
+This score makes the assumption that the probability that a new edge contains a node $x$ is proportional to the size of the set of neighbors of $x$, $|N(x)|$ \cite{linkpredintro}.  Thus, nodes that have more neighbors are more likely to get a new neighbor.
+
+\subsection{Weighted Link Prediction} \label{sec:weightedlinkpred}
+The previous section, introduces various methods for predicting new links in an unweighted graph.  However, it is often useful to predict weighted links.  In their paper, Murata, et al. explore ways to modify common link prediction scores to take into account the weights on edges \cite{weightedlinks}.  If $x$ and $y$ are nodes, $N(x)$ is the set of neighbors of node $x$, and $w(x,y)$ is the weight of edge between nodes $x$ and $y$, then the scores from \ref{sec:linkpred} are modified as follows:
+\begin{enumerate}
+	\item Weighted common neighbors: $$score(x,y) = \sum_{z \in N(x) \cap N(y)}  \frac{w(x,z) + w(y,z)}{2}$$
+	\item Weighted Adamic-Adar: $$score(x,y) = \sum_{z \in N(x) \cap N(y)} \frac{w(x,z) + w(y,z)}{2} \times \frac{1}{log(\sum_{z' \in N(z)} w(z',z))}$$
+	\item Weighted preferential attachment: $$score(x,y) = \sum_{x' \in N(x)} w(x',x) \times \sum_{y' \in N(y)} w(y', y)$$
+\end{enumerate}
+
+\section{Diffusion in Social Networks} \label{ch:diffusion}
+One of the major areas of research this project draws from is information diffusion in social networks.  Analysis of information diffusion has been done on a variety of social networks, including social media sites (e.g. Facebook, Twitter), LinkedIn, and even blogspaces.  Most diffusion research seeks to model the interactions between neighbor nodes in a network, which can interpreted as real-world social pressure.
+
+Li, et al. defines two different scenarios under which this social pressure occurs \cite{lisurvey}.  The first is individual influence, which refers to a single node in a network being able to influence the surrounding nodes.  An example of individual influence is the impact that social media influencers have on their followers.  In a directed graph, a node that has a lot of individual influence can often be detected if it has a very large outdegree in comparison to its indegree.  Li, et al. notes that nodes with great individual influence are very important as they are ultimately the ones who are speeding up the diffusion of information in a given network.  Thus, one can measure social influence by predicting a node's ability to spread information \cite{lisurvey}.  The next scenario is community influence.  A community is defined as ``a subset of the network in which the users are densely connected" and communities often have similar attributes, e.g., they like to play badminton, or their research area is similar \cite{lisurvey}.  Research in community influence is around detecting communities and then in understanding how communities have influence in their larger social networks.
+\subsection{Traditional Diffusion Models}
+Two of the most used information diffusion models are the Independent Cascade Model and the Linear Threshold Model.  Both seek to encode social pressure and the scenarios in which they might occur.
+\subsubsection{Independent Cascade Model}
+The Independent Cascade Model (ICM) assumes that a node can only influence a node that it is connected to, and that the nodes are making a binary decision (e.g. whether or not to engage with a given piece of content).  This model is referred to as a sender-centric model as senders activate receivers.  For a node \texttt{v} that has been activated, the model proceeds as follows \cite{lisurvey}:
+\begin{enumerate}
+	\item Consider all the neighbors of \texttt{v}.
+	\item Each neighbor weighs the fact that \texttt{v} chose to become activated, and its own set of influences (e.g. personal preferences).
+	\item Each neighbor either activates or stays inactive.
+	\item Repeat for each newly activated node.
+\end{enumerate}
+Note that inactive nodes can become activated, but in this model activated nodes cannot turn inactive.  This model can take into account a variety of interesting attributes that describe the strength of influence that one node \texttt{v} has on another node \texttt{w}.  For example, do nodes \texttt{v} and \texttt{w} have lots of mutual friends?  Does \texttt{v} only activate occasionally, meaning that node \texttt{w} should pay attention as there is a reason that \texttt{v} activated in this particular interest?  If these influences cannot be quantified as a probability in some way (it is often very difficult to do so), probabilities are often assigned uniformly at random.  In fact, predicting information diffusion probabilities in social networks is its own area of research.
+\subsubsection{Linear Threshold Model}
+The Linear Threshold Model (LTM) also uses the influence of neighboring nodes to determine whether or not a node becomes active.  As iterations progress, an inactive node becomes active as more and more of its neighbors become active.  Starting with a set of seed active nodes in the graph, a threshold is set for each of the inactive nodes in the graph.  This threshold is based on external and internal influences, but, as with LTM, if these cannot be determined, the threshold is often selected uniformly at random for each node.  After each iteration, a given inactive node will become active if the sum of the weights of the edges with active neighbor nodes exceeds its threshold.
+
+\subsection{Extensions with User and Content Features} \label{sec:usingusercontentfeatures}
+ICM and LTM are two of the most well-researched models for information diffusion and a number of papers explore modifications and improvements.  One of the most relevant for this project is a paper by Lagnier, et al., which looks at how to take into account content and user profiles \cite{lagnier}.  Lagnier, et al. notes that the social pressure represented by ICM and LTM is very important, but that these models fail to explicitly represent the content of the information being diffused, the user's profile, and the user's willingness to diffuse information.
+
+In the paper, they show how to integrate these important signals into simple three feature functions \cite{lagnier}:
+\begin{enumerate}
+	\item \textbf{Thematic interest} is defined as the interest of a given user in the piece of information.  They model this as the proximity between user profiles and the content diffused.
+	\item \textbf{Activity} is determined via a training set and represents the willingness of a node to diffuse information.  It is measured as the ratio between the number of pieces of information received and diffused by a node and the number of pieces of information received by that node.
+	\item \textbf{Social pressure} on each user is quantified given the number of neighbors that have already diffused the information.
+\end{enumerate}
+Lagnier, et al. represents each user by a vector of these three features to be used in their probabilistic modeling.  The basic model is to start with a seed set of initial diffusers and then iteratively compute, for each time step, the three feature functions.  The node's probability to diffuse is based on a linear combination of these features, with learned parameters.
+
+They ran their models on two blog datasets and compared results with ICM, LTM, and other approaches.  They found that the content of the information plays the biggest role (of the three additional pieces of information they experimented with) in the diffusion process \cite{lagnier}.
+
+\section{Content Engagement} \label{ch:engagement}
+Most of the research related to content engagement in social networks comes out of business schools and psychology departments.  A study from the College of Business Administration at East Carolina University explored different strategies that are used in social media marketing to drive consumer engagement.  Ashley and Tuten sampled social media content from select brands on the top 100 brands based on Interbrand's Best Global Brands valuation study.  The media content included one week of Facebook and MySpace posts, one week of tweets, one week of content from blogs and forums, and all video and photo content between June 2010 and August 2010.  A number of message strategies were evaluated including interactivity, functional appeal, emotional appeal, and exclusivity.  They found that exclusivity and emotional appeal were the two message strategies most highly-correlated with consumer engagement \cite{ecu}.
+
+Another study by Chu and Kim looked at what the determinants are of consumer engagement in social networks.  They examined an interesting facet of the social pressure that other studies have noted: trust.  As their work deals primarily with consumer engagement, the goal was to determine when a user would buy a product that they heard about through social media.  However, the same thought process can be extended to the more general case of content engagement.  If a user trusts the source where the content is coming from, they will be more likely to engage with it \cite{chu}.
+
+The spread and engagement of user-generated content is another interesting area of study within content engagement.  One of the underlying ideas is that an individual with a lot of social influence will be able to generate content that is diffused and engaged with more than users with less social influence.  Susarla, et al. created a dataset by scraping YouTube and found that diffusion and engagement can be viewed as two-step process.  In the first stage, a piece of information's search characteristics matter most.  This stage triggers initial diffusion that creates the space for subscriber networks.  After these subscriber networks are established, engagement with content depends more on experience characteristics (i.e. how the content is presented to users is more important than the content itself) \cite{susarla}.  This study is very interesting because it distinguishes the roles and influences between a piece of information's content, and the way it is presented.
+
+Finally, Weeks and Holbert from the School of Communication at the University of Columbus looked at how specifically news content diffuses and is engaged with in social medias.  They used the Pew Research Center for the People and Press's telephone survey on social networks data.  Weeks and Holbert looked at various user characteristics and how they were correlated to willingness to diffuse information and engagement with information.  Gender was apparently the most correlated factor, with those that identify as female more likely to share news content than males, but those that identify as male more likely to read and engage with news content than females \cite{weeks}.  Their study shows that profile information is correlated with engagement and can therefore be used to predict engagement.
+
+\section{Marketing Tools} \label{ch:marketing}
+Recently, there have been a number of "smart" marketing tools to help content creators and publishers drive more engagement.  one such tool is called Pi, which is described as "an AI-powered social marketing tool [that] can predict engagement" by using "a neural network to build a custom model for each user's patterns."  While the code for Pi and other similar marketing tools is not available, their existence shows that there is interest in and a market for better marketing tools.  Content creators and publishers want to better present their work to potential content consumers and are turning to personalization and recommendation techniques, which are based on user profiles and content profiles, to better do so.
+
+
+
+
+
+
+
+
+
+
+
+
+

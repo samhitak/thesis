@@ -1,0 +1,72 @@
+\section{Building an Interaction Network}
+One of the most interesting parts of this dataset is that it captures not only what each participant saw, but also who shared it with them.  Since each name is hashed to a unique ID, it is possible to thus reconstruct a network of interaction.  Note that this is different from recreating the actual social network as friendship information is not available.  This network is interesting to analyze in and of itself and can also be used for predicting diffusion.
+
+The network is represented as a directed graph where nodes represent users and an edge represents a user sharing an article with another user.  Weights on edges correspond to the number of articles shared.  Given that time information is associated with each user seeing a particular article, this network graph can be constructed at multiple time steps.  Doing so, allows the use of past interaction history in predicting future interactions.
+
+\section{Predicting Diffusion}\label{sec:methodsdiffusion}
+This project explores two ways to predict diffusion: edge prediction from the network graph and model-based predictions using the feature functions described in \ref{sec:usingusercontentfeatures}.
+\subsection{Edge Prediction}
+Given the network representation outlined above, predicting diffusion is analogous to predicting the existence of an edge in the interaction network.  To do so, a random user-article pair is selected.  If the user did see that article in the dataset and there are multiple instances of it being seen, a random instance is chosen and the network graph at the time step immediately prior to the instance is constructed.  If the user did not see the article in the dataset, the expected time to edge appearance is used to determine at what time step to construct the network graph.  In order to find the expected time to edge appearance, the article view time data is used to fit a probability distribution.  If the standard deviation is not too large, this method of determining the appropriate time to predict that a particular edge did not exist will be successful.  However, if the standard deviation is very large, then this will not yield the best results.
+
+With the appropriate graph constructed, edges are predicted using various similarity scores for weighted graphs.  The three that are used in this study are the weighted common neighbors, weighted Adamic-Adar, and weighted preferential attachments scores, which are introduced in \ref{sec:weightedlinkpred}.  For the three scores, a connection weight $score(x,y)$ is assigned to each pair of nodes $x$ and $y$ in the network, and then a ranked list in decreasing order of $score(x,y)$ is produced.  If $N(x)$ is the set of neighbors of $x$ in a network and $w(x,y)$ is the weight of the edge between nodes $x$ and $y$, then the scores are defined as follows: 
+\begin{enumerate}
+	\item Weighted common neighbors: $$score(x,y) = \sum_{z \in N(x) \cap N(y)}  \frac{w(x,z) + w(y,z)}{2}$$
+	\item Weighted Adamic-Adar: $$score(x,y) = \sum_{z \in N(x) \cap N(y)} \frac{w(x,z) + w(y,z)}{2} \times \frac{1}{log(\sum_{z' \in N(z)} w(z',z))}$$
+	\item Weighted preferential attachment: $$score(x,y) = \sum_{x' \in N(x)} w(x',x) \times \sum_{y' \in N(y)} w(y', y)$$
+\end{enumerate}
+
+These scores are evaluated at various acceptance thresholds using Receiver Operating Characteristic (ROC) curves.  ROC curves show the true positive rate plotted against the false positive rate at various decision thresholds and are useful in evaluating binary classifiers.  Given the different assumptions that these scores are based on, determining the most successful score for link prediction is indicative of qualities of the network and the way information spreads.
+
+\subsection{Incorporating Content and User Profiles}
+While the edge prediction methods do take into account social pressure and past interaction, two important sets of features they do not incorporate that are available with this dataset are content profiles and user profiles.  In order to use this information, the diffusion prediction strategy developed by Lagnier, et al. is used.
+
+As introduced in \ref{sec:usingusercontentfeatures}, this model is based on explicitly quantifying thematic interest (the interest of a given user in the current piece of content), activity (the willingness of a user to diffuse information), and social pressure.  For a given node $x$ (a user profile) and a given piece of content $c$, these three feature functions are defined as:
+\begin{enumerate}
+	\item Thematic interest: $$S(x, c) = sim(\texttt{tf-idf}(x), \texttt{tf-idf}(c))$$ where $sim$ is the cosine similarity (also used by Lagnier, et al.) and $\texttt{tf-idf}(n)$ is the $\texttt{tf-idf}$ matrix of the user or content profile $n$.  \texttt{Tf-idf} is a way to represent the content of a document or piece of text.  It stands for term frequency (the proportion of occurrences of a specific term to the total number of terms in the document) times inverse document frequency (inverse of the proportion of documents that contain that word/phrase).  In order to create a \texttt{tf-idf} matrix for a piece of text, first the stop words (like \textit{the} and \textit{and}) are removed.  Then all words are stemmed (such that \textit{runner}, \textit{running}, and \textit{run} all match to the same word, \textit{run}) For a user $x$, $\texttt{tf-idf}(x)$ is built from the words that make up their public profile.  For a piece of content $c$, $\texttt{tf-idf}(c)$ is built from the words that make up the title and description associated with it.  Stemming and $\texttt{tf-idf}$ matrix generation are performed using \texttt{scikit-learn} methods.
+	\item Activity: $$A(x) = \frac{out(x)}{in(x)}$$ where $out(n)$ and $in(n)$ are the outdegree and indegree respectively of node $n$.	
+	\item Social pressure: $$P(x) = \frac{\sum_{r \in R(x)} I(c \in T(r))}{|R(x)|}$$ where $R(x)$ is the set of all users that user $x$ has previously received content from, $T(r)$ is the set of pieces of content node $r$ has seen, and $I$ is the indicator function.
+\end{enumerate}
+With these feature functions, it is possible to represent each user as a vector $v$ of these three functions that evolve over time for each new piece of content $c$:
+$$v = \begin{pmatrix} S(x, c) \\ A(x) \\ P(x) \end{pmatrix}$$
+These features are then combined through simple linear combinations to generate a function for each user-content pair at each time step:
+$$f_\lambda(x, c, t) = \lambda_0 + \lambda_1v_1 + \lambda_2v_2 + \lambda_3v_3$$
+where $\lambda_0$, $\lambda_1$, $\lambda_2$, and $\lambda_3$ are positive parameters that are learned through ridge regression to approximate a polynomial function.  If a user $x$ saw content $c$ and time $t$, $f_\lambda(x, c, t) = 1$.  If not, then $f_\lambda(x, c, t) = 0$.  The training set consists of various $(x, c, t)$ tuples, calculated $S(x, c)$, $A(x)$, and $P(x)$ scores, and the ground truth $f_\lambda(x, c, t)$ function outputs.
+
+With the parameters trained, the function $f_\lambda(x, c, t)$, random user-content pairs are again selected.  If the interaction exists in the dataset, $f_\lambda(x, c, t)$ is calculated for the $t$ immediately prior to the interaction.  If the interaction doesn't exist, the estimated time to edge appearance is again used to determine at what $t$ to calculate $f_\lambda(x, c, t)$.  The predicted outputs of the $f_\lambda(x, c, t)$ function are once again stored and then evaluated using ROC curves.
+
+Based on the hypothesis that there is a correlation between user profiles and content profiles and given Langier, et. al's success using this methodology, it is expected that this technique for predicting diffusion will be more successful than simply using edge prediction.
+
+\section{Content Engagement}\label{ch:methodsengagement}
+As with predicting diffusion, this project explores two ways to predict content engagement: calculating feature functions based on the content and profile features that are known to be important, and training engagement prediction classifiers that determine what the most important features are.
+\subsection{Developing an Engagement Model} \label{sec:engagementmodel}
+As Langier, et al identified in their information diffusion study, it is possible to determine important feature functions based on content and profile features that have been shown to be important by other studies.  More specifically, it is possible to quantify thematic interest (same as thematic interest in the diffusion prediction model), sharer trust, and past engagement history.  For a given node $x$ (a user profile) and a given piece of content $c$ shared by user $y$, these three feature functions are defined as:
+\begin{enumerate}
+	\item Thematic interest: $$S(x, c) = sim(\texttt{tf-idf}(x), \texttt{tf-idf}(c))$$ where $sim$ is the cosine similarity, as in the diffusion prediction thematic interest feature function.
+	\item Trust: $$T(x, c, y, t) = \frac{\sum_{c \in R(x,y)} I(c \in E(x))}{|R(x,y)|}$$ where $R(x,y)$ is the set of all articles that user $x$ has seen that were shared by user $y$, $E(x, t)$ is the set of articles that $x$ has engaged with at time $t$, and $I$ is the indicator function.
+	\item Past engagement history: $$H(x, c) = sim(\texttt{tf-idf}(c), \texttt{tf-idf}(d))$$ where $sim$ is the cosine similarity and $\texttt{tf-idf}(d)$ is a \texttt{tf-idf} matrix for all documents that user $x$ has engaged with at time $t$.  
+\end{enumerate}
+
+As with the diffusion prediction model, these feature functions are used to represent each user as a vector that evolves over time for each piece of content c
+$$v = \begin{pmatrix} S(x, c) \\ T(x, c, y, t) \\ H(x, c) \end{pmatrix} $$
+with these feature functions being combined through simple linear combinations to create a function for each user-content pair at each time step:
+$$f_\lambda(x, c, t) = \lambda_0 + \lambda_1v_1 + \lambda_2v_2 + \lambda_3v_3$$
+These parameters are learned through ridge regression to approximate a polynomial function.  The testing and evaluation follows same procedure described in \ref{sec:methodsdiffusion} for the diffusion prediction model.
+\subsection{Training an Engagement Prediction Classifier}
+While prior work has provided a set of features that are likely important for predicting content engagement, using other traditional classification algorithms on the data is interesting and can highlight features other than thematic interest, trust, and past engagement history that might be important for this problem.  This project compares the content engagement model in \ref{sec:engagementmodel} with a random forest classifier.
+\subsubsection{Random Forest Classification}
+A Random Forest (RF) is a classification technique that uses multiple decision trees to determine the label to give to a particular data point.  The RF is made up of multiple decision trees, each of which solves the classification problem.  A decision tree predicts a target value based on various input variables.  In the tree, each node corresponds to one of the input variables and there are edges to children for each of the possible values of that input variable.  Thus, each leaf represents a value of the target variable given the values of the input variables represented by the path from the root to the leaf.  One of the most useful parts of decision trees is that they are easily used in cases where the data does not have purely numerical features.
+
+The RF combines the results from multiple decision trees.  Each decision tree's result can thought of as a vote, which the random forest outputting the category that the majority of decision trees voted on.
+\subsubsection{Using RF for Engagement Classification}
+This project uses $\texttt{scikit-learn}$'s RF method for classification.  As mentioned, categorical features (like gender being male or female) is perfectly fine for RF, so there is little data preprocessing to do.  The training set consists of input variables across all features from both the user and article that the row pertains to, and the output value is a $\texttt{true}$ or $\texttt{false}$ value, indicating whether or not the user engaged with the article.
+\\\\
+TODO: dealing with NULL variable values
+
+
+
+
+
+
+
+
+

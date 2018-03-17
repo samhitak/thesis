@@ -1,0 +1,17 @@
+\section{Dataset Exploration} \label{ch:exploration}
+\subsection{Mapping the Network}
+\subsection{Trending Articles}
+
+\section{Predicting Diffusion}
+
+\section{Predicting Engagement}
+
+\section{Limitations and Additional Considerations} \label{sec:limitations}
+\subsection{Data Limitations} \label{sec:datalims}
+While this dataset will be sufficient for the goals of this project, there are certainly aspects in which it falls short.  For example, there are other forms of social media where people share articles on, like Twitter.  Furthermore, this extension only tracks what users read on their laptops; there are many people who prefer to read articles on their phones or tablets.
+
+In terms of what the extension stores with relation to each user-article interaction, one possibly important characteristic is what picture is shown to the user.  While I track whether or not a picture was presented with an article, I do not store that picture for further analysis.  One of my friends mentioned that he does not even read the title of articles sometimes, and only looks at the picture to determine if an article will be interesting.  Incorporating such information into this thesis would require storing the images and doing some image analysis, which is out of the scope of this text-based project.
+
+Given that the Institutional Review Board (IRB) requires a consent form and the guarantee that participants are at least 18 years of age, I was limited in my participant acquisition.  For example, I could not simply get participants through Mechanical Turk or some other anonymous but mass system.  This also means that I primarily got participants who are my friends at Princeton.  They have similar friend lists on Facebook to me and are therefore seeing similar articles.  While this might be helpful in that there will be many more connections in the network that I create with my participants based on sharer hashes, there are certain features that will likely be blown out of proportion.  An example is articles published by ``The Daily Princetonian."  Given that most participants are from Princeton, they will be highly likely to see and click on any articles that have the word "Princeton" in the title or comment.  It will be interesting to see if these types of features are more highly correlated with engagement than others.
+
+Finally, as the extension parses out html looking for particular tags and strings, it is dependent on the structure of Facebook not dramatically changing during the course of this study.  Also, when I sent the extension to my first few participants, Zuckerberg had just announced that Facebook was going to make a conscious effort to show more personal content and less public content from pages, in order to facilitate more "meaningful interactions" \cite{zuckpost}.  I saw no difference over the course of data collection with regard to how many articles I was seeing on my News Feed, but it would be interesting to know when Facebook made that change to see if it was reflected in the data in any way.

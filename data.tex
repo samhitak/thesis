@@ -1,0 +1,53 @@
+\section{Creating the Data Collector} \label{ch:collector}
+The necessary data for this project is what articles appear on a person's Facebook News Feed, which ones they click on, what information was presented to them when they viewed the articles, and user's public profile information.  In order to collect this data from users, a Chrome extension was used.  This choice means that only those who use Facebook on their Chrome browser could be used in the data collection.  However, given that Chrome is the most popular web browser, at 58.4\% market share (the next most popular is Firefox at 13.54\%) \cite{browsers}, this is not be too limiting.
+
+The extension contains two components: the popup where users can provide public profile information and a background script that records articles and associated information.  The popup has a simple UI shown in the following screenshot:
+\begin{center}
+	\includegraphics[scale=0.5]{figures/extension_ui}
+\end{center}
+
+It asks users for basic profile information, places they have lived, education, and where they have worked.  While users are requested to only self-report information that is publicly available, they do not need to report information that they do not want to.  The name field is hashed to ensure anonymity of participants.
+
+The background script has more functionality as it parses the html to find articles and the accompanying information.  In order to only track articles on the Facebook News Feed, the extension determines that the current tab's URL is \\ \texttt{https://facebook.com}, the only URL where the News Feed is shown.  The articles are found by searching the html on the page for occurrences of \texttt{a href=}, which indicates the start of a URL.  Since this project is only interested in articles, links that are relative and contain \texttt{facebook.com} are not considered.  The extension also parses out the description the article was shared with (if it exists), the sharer (which is hashed), the time that it was shard, whether or not there was an image presented with the link, the title, and how many likes and reactions the article has.  Also stored is the current time that the URL was seen and whether or not the URL was clicked on, which serves as the metric for engagement.  The following shows a screenshot of an example article shared on Facebook, with the recorded information labeled:
+
+\includegraphics[scale=0.8]{figures/article_example}
+
+Each URL and its associated information is stored in a local array.  If the extension records that an article is seen again on the News Feed, it is only recorded as a distinct instance if the current time it was viewed is more than five minutes after the last time it was viewed.  This threshold of five minutes is set because the average Facebook session lasts 5.02 minutes \cite{fbtime}.  This local array is flushed to the database every time an article is clicked and an hour after the last flush occurred.  A similar logic is used to sync the data.
+
+\section{Database Storage} \label{ch:storage}
+In order to store the data collected across multiple Chrome extension, AWS tools are used.  DynamoDB databases, one to store user information and the other to store articles, are used as DynamoDB is an easy-to-use NoSQL database service that has a flexible data model.  For the users table, each row represents an individual participant in the study.  Thus, it makes sense that the primary key is the hashed name of the participant.  Each row in the articles table represents an interaction between a user and an article, with an interaction meaning that the user saw the article or that they clicked on the article.  In order to represent this, the primary key for this table is the hashed name of the user and the sort key is the URL that they interacted with.
+
+In order to interact with the databases, Lambda functions are used.  AWS Lambda is very convenient it allows code to be run without provisioning or managing servers.  There are three necessary interactions: saving an article, saving a user, and getting an article (used when the locally stored articles are being flushed to the database to check whether or not the user-article pair already exists).  The functions that allow for these interactions are written in Python.
+
+Finally, API Gateway is used to link the databases to the Lambda functions and create the API endpoints that can be called from the extension code.
+
+\section{Getting Participants} \label{ch:participants}
+The process of recruiting participants consisted of two phases.  First, I reached out to my friends and family individually.  In this way, I reached out to 190 people, of which 126 said that they would participate.  Of this 126, only 98 actually completed all the necessary instructions.
+
+Needing more participants, I sent emails to both my eating club's (Tower) listserv, the Entrepreneurship Club members listserv, and various residential college listservs.  This closed the gap in the necessary participants.  In the end, I had NUMBER using the extension for the minimum three-week period.  The extension collected NUMBER user-article interactions.  These methods for getting participants has certain drawbacks and limitations that are addressed in \ref{sec:datalims}.
+
+\section{Cleaning Up the Data} \label{cleanup}
+TODO
+\begin{enumerate}
+	\item user hashes in the articles table but not in the users table (problematic for using profile features to predict engagement, but data can still be used for analyzing diffusion)
+	\item User hashes in the users table but not in the articles table (again, problematic for predicting engagement component of thesis, and also problematic for analyzing diffusion)
+	\item Removing entries with improperly parsed html
+\end{enumerate}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

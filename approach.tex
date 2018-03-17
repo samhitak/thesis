@@ -1,0 +1,11 @@
+From the previous chapter, it is clear that there has been quite a bit of research done in the information diffusion and content engagement areas.  However, there are many ways in which this past work can be extended.  
+
+First, it is possible to use a more relevant dataset for diffusion analysis and prediction.  Past work on predicting diffusion has been done on datasets from blogspaces, MySpace, and Twitter.  However, as seen from the following chart, no study has been done on today's most popular social networking site \cite{socialsites}
+
+\begin{center}
+	\includegraphics[scale=0.4]{figures/popularsocialsites}
+\end{center}
+
+In order to improve on past work, this project uses data collected from Facebook users.  The data includes what articles appeared on a user's Facebook news feed and which ones they actually click on, including article features (who shared the article, the title, how many likes/reactions it has, etc.) and user public profile features (gender, location, work, etc.).  This dataset is used to predict diffusion using both weighted link prediction methods and the use of feature functions as introduced in \ref{sec:usingusercontentfeatures}.
+
+The second main contribution of this study is to use this granular dataset to use training to study engagement.  While studies have ben done on predicting content engagement in social networks, these studies do not work in the same way that ``smart" tools for marketers work.  More specifically, the models from these studies are not trained on a dataset to determine how to present content to users.  This project will develop an engagement prediction model using feature functions informed by previous work done in content engagement and will also use a more traditional classifier (a random forest classifier) to predict content engagement.
